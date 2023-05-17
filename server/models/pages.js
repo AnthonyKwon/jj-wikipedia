@@ -49,7 +49,8 @@ module.exports = class Page extends Model {
         contentType: {type: 'string'},
 
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        verified: {type: 'integer'}
       }
     }
   }
@@ -162,7 +163,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      verified: 'int'
     })
   }
 
@@ -315,7 +317,8 @@ module.exports = class Page extends Model {
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
-      })
+      }),
+      verified: 2 // debug
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -1000,6 +1003,7 @@ module.exports = class Page extends Model {
           'pages.authorId',
           'pages.creatorId',
           'pages.extra',
+          'pages.verified',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
@@ -1051,6 +1055,7 @@ module.exports = class Page extends Model {
    */
   static async savePageToCache(page) {
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`)
+    console.log(page)
     await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
       id: page.id,
       authorId: page.authorId,
@@ -1073,7 +1078,8 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
+      updatedAt: page.updatedAt,
+      verified: page.verified
     }))
   }
 

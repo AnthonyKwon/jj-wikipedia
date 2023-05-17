@@ -60,6 +60,7 @@
             )
             .page-header-headings
               .headline.grey--text(:class='$vuetify.theme.dark ? `text--lighten-2` : `text--darken-3`') {{title}}
+                v-icon.page-verified {{verified}}
               .caption.grey--text.text--darken-1 {{description}}
             .page-edit-shortcuts(
               v-if='editShortcutsObj.editMenuBar'
@@ -489,6 +490,12 @@ export default {
     filename: {
       type: String,
       default: ''
+    },
+    verified: {
+      type: String,
+      default: ''
+      // verified/current: mdi-checkbox-multiple-marked
+      // verified/expired: mdi-checkbox-multiple-marked-outline
     }
   },
   data() {
@@ -751,6 +758,10 @@ export default {
     display: flex;
     justify-content: center;
     flex-direction: column;
+
+    .page-verified {
+      margin-left: 0.3em;
+    }
   }
 
   .page-edit-shortcuts {
