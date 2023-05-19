@@ -188,6 +188,7 @@ import { StatusIndicator } from 'vue-status-indicator'
 
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
+import verifyPageMutation from 'gql/common/common-pages-mutation-verify.gql'
 
 export default {
   components: {
@@ -226,6 +227,31 @@ export default {
         this.$store.commit('pushGraphError', err)
       }
       this.$store.commit(`loadingStop`, 'page-delete')
+    },
+    async verifyPage() {
+      this.loading = true
+      this.$store.commit(`loadingStart`, 'page-verify')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: verifyPageMutation,
+          variables: {
+            id: this.page.id
+          }
+        })
+        if (_.get(resp, 'data.pages.verify.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: `Page verified successfully.`,
+            icon: 'check'
+          })
+          this.$router.replace('/pages')
+        } else {
+          throw new Error(_.get(resp, 'data.pages.verify.responseResult.message', this.$t('common:error.unexpected')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.$store.commit(`loadingStop`, 'page-verify')
     },
     async rerenderPage() {
       this.$store.commit('showNotification', {
