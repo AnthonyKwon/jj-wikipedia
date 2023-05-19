@@ -126,6 +126,7 @@ exports.up = knex => {
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+      table.integer('verified').unsigned().notNullable().defaultTo(0)
     })
     // PAGE TREE ---------------------------
     .createTable('pageTree', table => {
