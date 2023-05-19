@@ -1,0 +1,12 @@
+mutation($id: Int!) {
+  pages {
+    verify(id: $id) {
+      responseResult {
+        succeeded
+        errorCode
+        slug
+        message
+      }
+    }
+  }
+}

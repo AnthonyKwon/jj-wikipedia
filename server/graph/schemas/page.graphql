@@ -136,6 +136,10 @@ type PageMutation {
     id: Int!
   ): DefaultResponse @auth(requires: ["manage:system"])
 
+  verify(
+    id: Int!
+  ): DefaultResponse @auth(requires: ["manage:system"])
+
   updateTag(
     id: Int!
     tag: String!

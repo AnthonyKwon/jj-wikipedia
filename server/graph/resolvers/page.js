@@ -173,8 +173,8 @@ module.exports = {
     async singleByPath(obj, args, context, info) {
       let page = await WIKI.models.pages.getPageFromDb({
         path: args.path,
-        locale: args.locale,
-      });
+        locale: args.locale
+      })
       if (page) {
         if (WIKI.auth.checkAccess(context.req.user, ['manage:pages', 'delete:pages'], {
           path: page.path,
@@ -486,6 +486,22 @@ module.exports = {
         }
         return {
           responseResult: graphHelper.generateSuccess('Tag has been deleted.')
+        }
+      } catch (err) {
+        return graphHelper.generateError(err)
+      }
+    },
+    /**
+     * VERIFY PAGE
+     */
+    async verify(obj, args, context) {
+      try {
+        await WIKI.models.pages.verifyPage({
+          ...args,
+          user: context.req.user
+        })
+        return {
+          responseResult: graphHelper.generateSuccess('Page has been verified.')
         }
       } catch (err) {
         return graphHelper.generateError(err)

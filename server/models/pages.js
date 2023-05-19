@@ -317,8 +317,7 @@ module.exports = class Page extends Model {
       extra: JSON.stringify({
         js: scriptJs,
         css: scriptCss
-      }),
-      verified: 2 // debug
+      })
     })
     const page = await WIKI.models.pages.getPageFromDb({
       path: opts.path,
@@ -837,6 +836,32 @@ module.exports = class Page extends Model {
       path: page.path,
       mode: 'delete'
     })
+  }
+
+  /**
+   * Verify an Existing Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise with no value
+   */
+  static async verifyPage(opts) {
+    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
+    if (!page) {
+      throw new WIKI.Error.PageNotFound()
+    }
+
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['manage:system'], {
+      locale: page.locale,
+      path: page.path
+    })) {
+      throw new WIKI.Error.PageDeleteForbidden()
+    }
+
+    // -> Verify page
+    await WIKI.models.pages.query().patch({
+      verified: 1
+    }).findById(page.id)
   }
 
   /**
