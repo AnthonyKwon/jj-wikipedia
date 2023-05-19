@@ -424,6 +424,13 @@ module.exports = class Page extends Model {
       scriptJs = opts.scriptJs || ''
     }
 
+    // -> Expire verification mark if verified
+    if (ogPage.verified === 1) {
+      await WIKI.models.pages.query().patch({
+        verified: 2
+      }).findById(ogPage.id)
+    }
+
     // -> Update page
     await WIKI.models.pages.query().patch({
       authorId: opts.user.id,
