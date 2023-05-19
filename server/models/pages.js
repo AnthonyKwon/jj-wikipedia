@@ -424,13 +424,6 @@ module.exports = class Page extends Model {
       scriptJs = opts.scriptJs || ''
     }
 
-    // -> Expire verification mark if verified
-    if (ogPage.verified === 1) {
-      await WIKI.models.pages.query().patch({
-        verified: 2
-      }).findById(ogPage.id)
-    }
-
     // -> Update page
     await WIKI.models.pages.query().patch({
       authorId: opts.user.id,
@@ -447,6 +440,13 @@ module.exports = class Page extends Model {
       })
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
+
+    // -> Expire verification mark if verified
+    if (page.verified === 1) {
+      await WIKI.models.pages.query().patch({
+        verified: 2
+      }).findById(page.id)
+    }
 
     // -> Save Tags
     await WIKI.models.tags.associateTags({ tags: opts.tags, page })
@@ -862,13 +862,17 @@ module.exports = class Page extends Model {
       locale: page.locale,
       path: page.path
     })) {
-      throw new WIKI.Error.PageDeleteForbidden()
+      throw new WIKI.Error.PageVerifyForbidden()
     }
 
     // -> Verify page
     await WIKI.models.pages.query().patch({
       verified: 1
     }).findById(page.id)
+
+    // -> Update page cache
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
   }
 
   /**

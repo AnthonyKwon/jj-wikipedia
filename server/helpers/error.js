@@ -197,6 +197,10 @@ module.exports = {
     message: 'You are not authorized to update this page.',
     code: 6009
   }),
+  PageVerifyForbidden: CustomError('PageVerifyForbidden', {
+    message: 'You are not authorized to verify this page.',
+    code: 6010
+  }),
   PageViewForbidden: CustomError('PageViewForbidden', {
     message: 'You are not authorized to view this page.',
     code: 6013
