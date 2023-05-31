@@ -65,7 +65,7 @@ defaults:
       autoLogin: false
       enforce2FA: false
       hideLocal: false
-      loginBgUrl: ''
+      loginBgUrl: '/_assets/img/splash/11.jpg'
       audience: 'urn:wiki.js'
       tokenExpiration: '30m'
       tokenRenewal: '14d'
