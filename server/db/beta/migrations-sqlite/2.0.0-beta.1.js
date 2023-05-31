@@ -121,6 +121,7 @@ exports.up = knex => {
       table.string('contentType').notNullable()
       table.string('createdAt').notNullable()
       table.string('updatedAt').notNullable()
+      table.integer('verified').unsigned().notNullable().defaultTo(0)
 
       table.string('editorKey').references('key').inTable('editors')
       table.string('localeCode', 5).references('code').inTable('locales')

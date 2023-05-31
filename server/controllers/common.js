@@ -478,6 +478,15 @@ router.get('/*', async (req, res, next) => {
           })
         }
 
+        // -> convert page status code to icon
+        if (page.verified === 1) { // verified and valid
+          page.verified = 'mdi-checkbox-multiple-marked'
+        } else if (page.verified === 2) { // verified but expired
+          page.verified = 'mdi-checkbox-multiple-marked-outline'
+        } else { // unverified
+          page.verified = ''
+        }
+
         // -> Build sidebar navigation
         let sdi = 1
         const sidebar = (await WIKI.models.navigation.getTree({ cache: true, locale: pageArgs.locale, groups: req.user.groups })).map(n => ({

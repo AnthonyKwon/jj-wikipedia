@@ -39,6 +39,28 @@
                 v-list-item-icon
                   v-icon(color='indigo') mdi-pencil
                 v-list-item-title Edit
+              v-dialog(v-model='verifyPageDialog', max-width='500')
+                template(v-slot:activator='{ on }')
+                  v-list-item(v-on='on')
+                    v-list-item-icon
+                      v-icon(color='indigo') mdi-check
+                    v-list-item-title Verify Page
+                v-card
+                  .dialog-header.is-short.is-indigo
+                    v-icon.mr-2(color='white') mdi-check
+                    span Verify Page
+                  v-card-text.pt-5
+                    i18next.body-2(path='common:page.verifyTitle', tag='div')
+                      span.indigo--text.text--darken-2(place='title') {{page.title}}
+                    .caption {{$t('common:page.verifySubtitle')}}
+                    v-chip.mt-3.ml-0.mr-1(label, color='indigo lighten-4', disabled, small)
+                      .caption.indigo--text.text--darken-2 {{page.locale.toUpperCase()}}
+                    v-chip.mt-3.mx-0(label, color='indigo lighten-5', disabled, small)
+                      span.indigo--text.text--darken-2 /{{page.path}}
+                  v-card-chin
+                    v-spacer
+                    v-btn(text, @click='verifyPageDialog = false', :disabled='loading') {{$t('common:actions.cancel')}}
+                    v-btn(color='indigo darken-2', @click='verifyPage', :loading='loading').white--text {{$t('common:actions.verify')}}
               v-list-item(@click='', disabled)
                 v-list-item-icon
                   v-icon(color='grey') mdi-cube-scan
@@ -166,6 +188,7 @@ import { StatusIndicator } from 'vue-status-indicator'
 
 import pageQuery from 'gql/admin/pages/pages-query-single.gql'
 import deletePageMutation from 'gql/common/common-pages-mutation-delete.gql'
+import verifyPageMutation from 'gql/common/common-pages-mutation-verify.gql'
 
 export default {
   components: {
@@ -174,6 +197,7 @@ export default {
   data() {
     return {
       deletePageDialog: false,
+      verifyPageDialog: false,
       page: {},
       loading: false
     }
@@ -203,6 +227,31 @@ export default {
         this.$store.commit('pushGraphError', err)
       }
       this.$store.commit(`loadingStop`, 'page-delete')
+    },
+    async verifyPage() {
+      this.loading = true
+      this.$store.commit(`loadingStart`, 'page-verify')
+      try {
+        const resp = await this.$apollo.mutate({
+          mutation: verifyPageMutation,
+          variables: {
+            id: this.page.id
+          }
+        })
+        if (_.get(resp, 'data.pages.verify.responseResult.succeeded', false)) {
+          this.$store.commit('showNotification', {
+            style: 'green',
+            message: `Page verified successfully.`,
+            icon: 'check'
+          })
+          this.$router.replace('/pages')
+        } else {
+          throw new Error(_.get(resp, 'data.pages.verify.responseResult.message', this.$t('common:error.unexpected')))
+        }
+      } catch (err) {
+        this.$store.commit('pushGraphError', err)
+      }
+      this.$store.commit(`loadingStop`, 'page-verify')
     },
     async rerenderPage() {
       this.$store.commit('showNotification', {

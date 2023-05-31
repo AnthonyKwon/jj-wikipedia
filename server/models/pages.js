@@ -49,7 +49,8 @@ module.exports = class Page extends Model {
         contentType: {type: 'string'},
 
         createdAt: {type: 'string'},
-        updatedAt: {type: 'string'}
+        updatedAt: {type: 'string'},
+        verified: {type: 'integer'}
       }
     }
   }
@@ -162,7 +163,8 @@ module.exports = class Page extends Model {
       },
       title: 'string',
       toc: 'string',
-      updatedAt: 'string'
+      updatedAt: 'string',
+      verified: 'int'
     })
   }
 
@@ -438,6 +440,13 @@ module.exports = class Page extends Model {
       })
     }).where('id', ogPage.id)
     let page = await WIKI.models.pages.getPageFromDb(ogPage.id)
+
+    // -> Expire verification mark if verified
+    if (page.verified === 1) {
+      await WIKI.models.pages.query().patch({
+        verified: 2
+      }).findById(page.id)
+    }
 
     // -> Save Tags
     await WIKI.models.tags.associateTags({ tags: opts.tags, page })
@@ -837,6 +846,36 @@ module.exports = class Page extends Model {
   }
 
   /**
+   * Verify an Existing Page
+   *
+   * @param {Object} opts Page Properties
+   * @returns {Promise} Promise with no value
+   */
+  static async verifyPage(opts) {
+    const page = await WIKI.models.pages.getPageFromDb(_.has(opts, 'id') ? opts.id : opts)
+    if (!page) {
+      throw new WIKI.Error.PageNotFound()
+    }
+
+    // -> Check for page access
+    if (!WIKI.auth.checkAccess(opts.user, ['manage:system'], {
+      locale: page.locale,
+      path: page.path
+    })) {
+      throw new WIKI.Error.PageVerifyForbidden()
+    }
+
+    // -> Verify page
+    await WIKI.models.pages.query().patch({
+      verified: 1
+    }).findById(page.id)
+
+    // -> Update page cache
+    await WIKI.models.pages.deletePageFromCache(page.hash)
+    WIKI.events.outbound.emit('deletePageFromCache', page.hash)
+  }
+
+  /**
    * Reconnect links to new/move/deleted page
    *
    * @param {Object} opts - Page parameters
@@ -1000,6 +1039,7 @@ module.exports = class Page extends Model {
           'pages.authorId',
           'pages.creatorId',
           'pages.extra',
+          'pages.verified',
           {
             authorName: 'author.name',
             authorEmail: 'author.email',
@@ -1051,6 +1091,7 @@ module.exports = class Page extends Model {
    */
   static async savePageToCache(page) {
     const cachePath = path.resolve(WIKI.ROOTPATH, WIKI.config.dataPath, `cache/${page.hash}.bin`)
+    console.log(page)
     await fs.outputFile(cachePath, WIKI.models.pages.cacheSchema.encode({
       id: page.id,
       authorId: page.authorId,
@@ -1073,7 +1114,8 @@ module.exports = class Page extends Model {
       tags: page.tags.map(t => _.pick(t, ['tag', 'title'])),
       title: page.title,
       toc: _.isString(page.toc) ? page.toc : JSON.stringify(page.toc),
-      updatedAt: page.updatedAt
+      updatedAt: page.updatedAt,
+      verified: page.verified
     }))
   }
 
